@@ -4,8 +4,6 @@ import (
 	"fmt"
 	openvvar "github.com/fogodev/openvvar/pkg"
 	"math"
-
-	"flag"
 	"os"
 	"strconv"
 	"testing"
@@ -67,7 +65,6 @@ func TestLoad(t *testing.T) {
 	float64Flag := strconv.FormatFloat(math.MaxFloat64, 'f', 6, 64)
 
 	ptr := "ptr"
-	ptrFlag := fmt.Sprintf("%p", &ptr)
 	stringFlag := "string"
 	durationFlag := "10s"
 
@@ -82,13 +79,21 @@ func TestLoad(t *testing.T) {
 	os.Setenv("UINT16", uint16Env)
 	os.Setenv("UINT32", uint32Env)
 	os.Setenv("UINT64", uint64Env)
+	os.Setenv("STRUCTPTRNOTNIL_INT", intEnv)
+	os.Setenv("STRUCTPTRNOTNIL_STRING", stringFlag)
 
-
-	flag.Set("float32", float32Flag)
-	flag.Set("float64", float64Flag)
-	flag.Set("ptr", ptrFlag)
-	flag.Set("string", stringFlag)
-	flag.Set("duration", durationFlag)
+	os.Args = append(
+		os.Args[:1],
+		fmt.Sprintf("-float32=%s", float32Flag),
+		fmt.Sprintf("-float64=%s", float64Flag),
+		fmt.Sprintf("-ptr=%s", ptr),
+		fmt.Sprintf("-string=%s", stringFlag),
+		fmt.Sprintf("-duration=%s", durationFlag),
+		fmt.Sprintf("-struct-int=%s", intEnv),
+		fmt.Sprintf("-struct-string=%s", stringFlag),
+		fmt.Sprintf("-structptrnotnil-int=%s", intEnv),
+		fmt.Sprintf("-structptrnotnil-string=%s", stringFlag),
+	)
 
 	openvvar.Load(&s)
 
@@ -118,5 +123,32 @@ func TestLoad(t *testing.T) {
 			String: "string",
 		},
 	}, s)
+}
 
+func TestLoadRequired(t *testing.T) {
+	s := struct {
+		Name string `config:"name,required"`
+	}{}
+
+	defer func() {
+		if r := recover(); r == nil {
+			panic("Failed required test")
+		}
+	}()
+	openvvar.Load(&s)
+}
+
+func TestFlagPriority(t *testing.T) {
+
+	type testStruct struct {
+		Name string `config:"another_name,required"`
+	}
+	s := testStruct{}
+
+	os.Args = append(os.Args[:1], fmt.Sprintf("-another_name=%s", "right"))
+	os.Setenv("ANOTHER_NAME", "wrong")
+
+	openvvar.Load(&s)
+
+	require.EqualValues(t, testStruct{Name: "right"}, s )
 }

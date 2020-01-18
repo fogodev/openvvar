@@ -13,13 +13,13 @@ func (nf *NotFound) Error() string {
 }
 
 
-func Get(name string) ([]byte, *NotFound) {
+func Get(name string) (string, *NotFound) {
 	if val := os.Getenv(name); val != "" {
-		return []byte(val), nil
+		return val, nil
 	}
 	name = strings.Replace(strings.ToUpper(name), "-", "_", -1)
 	if val := os.Getenv(name); val != "" {
-		return []byte(val), nil
+		return val, nil
 	}
-	return nil, &NotFound{}
+	return "", &NotFound{}
 }

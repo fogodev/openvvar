@@ -84,27 +84,26 @@ func LoadStruct(cfg *StructConfig) {
 				}
 			}()
 		default:
-			flag.Var(&flagValue{field}, field.Key, field.Description)
+			flag.Var(field, field.Key, field.Description)
 		}
 	}
 
+	flagSet := map[string]bool{}
+	flag.CommandLine.Visit(func(f *flag.Flag) {
+		flagSet[f.Name] = true
+	})
+
+	flag.CommandLine.VisitAll(func(f *flag.Flag) {
+		if _, defined := flagSet[f.Name]; !defined {
+			if envVar, notFound := Get(f.Name); notFound == nil {
+				if err := flag.CommandLine.Set(f.Name, envVar); err != nil {
+					panic(err)
+				}
+			}
+		}
+	})
+
 	flag.Parse()
-}
-
-type flagValue struct {
-	*FieldConfig
-}
-
-func (f *flagValue) String() string {
-	if f.FieldConfig == nil {
-		return ""
-	}
-
-	return f.Key
-}
-
-func (f *flagValue) Get() interface{} {
-	return f.Default.Interface()
 }
 
 func shortDesc(description string) string {
