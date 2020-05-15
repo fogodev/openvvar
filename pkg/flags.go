@@ -3,6 +3,7 @@ package openvvar
 import (
 	"flag"
 	"fmt"
+	"os"
 	"reflect"
 	"time"
 )
@@ -11,7 +12,7 @@ import (
 func LoadStruct(cfg *StructConfig) {
 	for _, loopingField := range cfg.Fields {
 		field := loopingField
-		// Display all the flags and their default values but override the field only if the user has explicitely
+		// Display all the flags and their default values but override the field only if the user has explicitly
 		// set the flag.
 		k := field.Value.Kind()
 		switch {
@@ -97,7 +98,8 @@ func LoadStruct(cfg *StructConfig) {
 		if _, defined := flagSet[f.Name]; !defined {
 			if envVar, notFound := Get(f.Name); notFound == nil {
 				if err := flag.CommandLine.Set(f.Name, envVar); err != nil {
-					panic(err)
+					fmt.Fprintln(os.Stderr, err)
+					os.Exit(1)
 				}
 			}
 		}

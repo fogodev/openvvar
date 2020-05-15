@@ -653,3 +653,6 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/go,osx,vim,linux,macos,emacs,windows,sublimetext,visualstudio,jetbrains+all,visualstudiocode,archlinuxpackages
+
+# PROJECT
+!test/.env.test

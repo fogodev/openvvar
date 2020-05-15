@@ -2,17 +2,17 @@ package test
 
 import (
 	"fmt"
-	openvvar "github.com/fogodev/openvvar/pkg"
 	"math"
 	"os"
+	"os/exec"
 	"strconv"
 	"testing"
 	"time"
 
+	openvvar "github.com/fogodev/openvvar/pkg"
+
 	"github.com/stretchr/testify/require"
 )
-
-type store map[string]string
 
 func TestLoad(t *testing.T) {
 	type nested struct {
@@ -123,19 +123,26 @@ func TestLoad(t *testing.T) {
 			String: "string",
 		},
 	}, s)
+
+	s.unexported = 1 // This line exist just to satisfy golangci-lint
 }
 
 func TestLoadRequired(t *testing.T) {
-	s := struct {
-		Name string `config:"name,required"`
-	}{}
+	if os.Getenv("TEST_LOAD_REQUIRED") == "1" {
+		s := struct {
+			Name string `config:"name,required"`
+		}{}
 
-	defer func() {
-		if r := recover(); r == nil {
-			panic("Failed required test")
+		openvvar.Load(&s)
+	} else {
+		cmd := exec.Command(os.Args[0], "-test.run=TestLoadRequired")
+		cmd.Env = append(os.Environ(), "TEST_LOAD_REQUIRED=1")
+		err := cmd.Run()
+		if e, ok := err.(*exec.ExitError); ok && !e.Success() {
+			return
 		}
-	}()
-	openvvar.Load(&s)
+		t.Fatal("Openvvar must exit on missing required field")
+	}
 }
 
 func TestFlagPriority(t *testing.T) {
@@ -150,5 +157,64 @@ func TestFlagPriority(t *testing.T) {
 
 	openvvar.Load(&s)
 
-	require.EqualValues(t, testStruct{Name: "right"}, s )
+	require.EqualValues(t, testStruct{Name: "right"}, s)
+}
+
+func TestDefaultValue(t *testing.T) {
+
+	s := struct {
+		Name   string `config:"default_name,default=Xablau"`
+		Number int    `config:"default_number,default=42"`
+	}{}
+
+	openvvar.Load(&s)
+
+	require.EqualValues(t, "Xablau", s.Name)
+}
+
+func TestDefaultValueInvalidType(t *testing.T) {
+	if os.Getenv("TEST_DEFAULT_VALUE_INVALID_TYPE") == "1" {
+		s := struct {
+			InvalidType map[string]string `config:"default_name,default=Xablau"`
+		}{}
+
+		openvvar.Load(&s)
+
+	} else {
+		cmd := exec.Command(os.Args[0], "-test.run=TestDefaultValueInvalidType")
+		cmd.Env = append(os.Environ(), "TEST_DEFAULT_VALUE_INVALID_TYPE=1")
+		err := cmd.Run()
+		if e, ok := err.(*exec.ExitError); ok && !e.Success() {
+			return
+		}
+		t.Fatal("Openvvar must exit on default value for invalid field type")
+	}
+}
+
+func TestDotEnvFile(t *testing.T) {
+	s := struct {
+		Test string `config:"test,required"`
+	}{}
+
+	openvvar.Load(&s, ".env.test")
+
+	require.EqualValues(t, s.Test, "test")
+}
+
+func TestDefaultValueParseFail(t *testing.T) {
+	if os.Getenv("TEST_DEFAULT_VALUE_PARSE_FAIL") == "1" {
+		s := struct {
+			InvalidType bool `config:"default_name,default=Xablau"`
+		}{}
+
+		openvvar.Load(&s)
+	} else {
+		cmd := exec.Command(os.Args[0], "-test.run=TestDefaultValueParseFail")
+		cmd.Env = append(os.Environ(), "TEST_DEFAULT_VALUE_PARSE_FAIL=1")
+		err := cmd.Run()
+		if e, ok := err.(*exec.ExitError); ok && !e.Success() {
+			return
+		}
+		t.Fatal("Openvvar must exit on default value parse error")
+	}
 }

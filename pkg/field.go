@@ -2,6 +2,7 @@ package openvvar
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -35,23 +36,24 @@ func (f *FieldConfig) Get() interface{} {
 	return f.Default.Interface()
 }
 
-
 func convert(data string, value reflect.Value) {
-	t := value.Type()
+	valueType := value.Type()
 
 	// Duration is a special type because we need to reflect on an instance of it
-	if t == durationType {
+	if valueType == durationType {
 		d, err := time.ParseDuration(data)
 		if err != nil {
-			panic(err)
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(1)
 		}
 		value.SetInt(int64(d))
 	} else {
-		switch t.Kind() {
+		switch valueType.Kind() {
 		case reflect.Bool:
 			b, err := strconv.ParseBool(data)
 			if err != nil {
-				panic(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 			value.SetBool(b)
 		case reflect.Slice:
@@ -60,7 +62,7 @@ func convert(data string, value reflect.Value) {
 			ss := strings.Split(data, ",")
 			for _, s := range ss {
 				// create a new Value v based on the type of the slice
-				v := reflect.Indirect(reflect.New(t.Elem()))
+				v := reflect.Indirect(reflect.New(valueType.Elem()))
 				// call convert to set the current value of the slice to v
 				convert(s, v)
 				// append v to the temporary slice
@@ -80,9 +82,10 @@ func convert(data string, value reflect.Value) {
 			reflect.Int16,
 			reflect.Int32,
 			reflect.Int64:
-			i, err := strconv.ParseInt(data, 10, t.Bits())
+			i, err := strconv.ParseInt(data, 10, valueType.Bits())
 			if err != nil {
-				panic(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 
 			value.SetInt(i)
@@ -91,20 +94,23 @@ func convert(data string, value reflect.Value) {
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
-			i, err := strconv.ParseUint(data, 10, t.Bits())
+			i, err := strconv.ParseUint(data, 10, valueType.Bits())
 			if err != nil {
-				panic(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 
 			value.SetUint(i)
 		case reflect.Float32, reflect.Float64:
-			f, err := strconv.ParseFloat(data, t.Bits())
+			f, err := strconv.ParseFloat(data, valueType.Bits())
 			if err != nil {
-				panic(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 			value.SetFloat(f)
 		default:
-			panic(fmt.Sprintf("field type '%s' not supported", t.Kind()))
+			fmt.Fprintf(os.Stderr, "field type '%s' not supported", valueType.Kind())
+			os.Exit(1)
 		}
 	}
 }
