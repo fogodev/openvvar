@@ -218,3 +218,18 @@ func TestDefaultValueParseFail(t *testing.T) {
 		t.Fatal("Openvvar must exit on default value parse error")
 	}
 }
+
+func TestDotEnvFileWithNestedField(t *testing.T) {
+
+	type Nested struct {
+		Name string `config:"name,required"`
+	}
+
+	s := struct {
+		Nested Nested
+	}{}
+
+	openvvar.Load(&s, ".env.nested.test")
+
+	require.EqualValues(t, s.Nested.Name, "test")
+}

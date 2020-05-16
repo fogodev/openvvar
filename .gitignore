@@ -656,3 +656,4 @@ MigrationBackup/
 
 # PROJECT
 !test/.env.test
+!test/.env.nested.test

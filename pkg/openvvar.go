@@ -70,16 +70,13 @@ func parseStruct(receiverStruct reflect.Value, prefix string) *StructConfig {
 
 			// Skipping fields with empty tags or no tags at all
 			if tag != "" {
-				var key string
 				if prefix != "" {
-					key = fmt.Sprintf("%s-%s", strings.ToLower(prefix), tag)
-				} else {
-					key = tag
+					tag = fmt.Sprintf("%s-%s", strings.ToLower(prefix), tag)
 				}
 
 				fieldConfig := FieldConfig{
 					Name:  fmt.Sprintf("%s%s", prefix, field.Name),
-					Key:   key,
+					Key:   tag,
 					Value: value,
 				}
 
