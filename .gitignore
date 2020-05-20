@@ -60,7 +60,7 @@ flycheck_*.el
 *.so
 *.dylib
 
-# Test binary, built with `go test -c`
+# Test binary, built with `go test_samples -c`
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
@@ -345,7 +345,7 @@ bld/
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
-# MSTest test Results
+# MSTest test_samples Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
@@ -655,5 +655,5 @@ MigrationBackup/
 # End of https://www.gitignore.io/api/go,osx,vim,linux,macos,emacs,windows,sublimetext,visualstudio,jetbrains+all,visualstudiocode,archlinuxpackages
 
 # PROJECT
-!test/.env.test
-!test/.env.nested.test
+!test_samples/.env.test
+!test_samples/.env.nested.test

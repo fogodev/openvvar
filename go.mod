@@ -1,6 +1,6 @@
 module github.com/fogodev/openvvar
 
-go 1.13
+go 1.14
 
 require (
 	github.com/joho/godotenv v1.3.0
