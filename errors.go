@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// DotEnvNotFoundError for when the file is not found
 type DotEnvNotFoundError struct {
 	Err error
 }
@@ -18,6 +19,7 @@ func (e *DotEnvNotFoundError) Unwrap() error {
 	return e.Err
 }
 
+// Is method to comply with new errors functions
 func (e *DotEnvNotFoundError) Is(target error) bool {
 	tar, ok := target.(*DotEnvNotFoundError)
 	if !ok {
@@ -27,6 +29,7 @@ func (e *DotEnvNotFoundError) Is(target error) bool {
 	return errors.Is(e.Err, tar.Err) || tar.Err == nil
 }
 
+// FlagCollectionError when we receive errors from flag library
 type FlagCollectionError struct {
 	Errors map[error]bool // Using this map as a hash set
 }
@@ -40,6 +43,7 @@ func (e *FlagCollectionError) Error() string {
 	return strings.Join(keys, ": ")
 }
 
+// Is method to comply with new errors functions
 func (e *FlagCollectionError) Is(target error) bool {
 	tar, ok := target.(*FlagCollectionError)
 	if !ok {
@@ -59,6 +63,7 @@ func (e *FlagCollectionError) Is(target error) bool {
 	return true
 }
 
+// FlagParseError is for when we fail to parse a specific flag
 type FlagParseError struct {
 	Err error
 }
@@ -67,6 +72,7 @@ func (e *FlagParseError) Error() string {
 	return e.Err.Error()
 }
 
+// Is method to comply with new errors functions
 func (e *FlagParseError) Is(target error) bool {
 	tar, ok := target.(*FlagParseError)
 	if !ok {
@@ -77,6 +83,7 @@ func (e *FlagParseError) Is(target error) bool {
 
 }
 
+// TypeConversionError occurs on string parsing for some types
 type TypeConversionError struct {
 	Err error
 }
@@ -89,6 +96,7 @@ func (e *TypeConversionError) Unwrap() error {
 	return e.Err
 }
 
+// Is method to comply with new errors functions
 func (e *TypeConversionError) Is(target error) bool {
 	tar, ok := target.(*TypeConversionError)
 	if !ok {
@@ -98,6 +106,7 @@ func (e *TypeConversionError) Is(target error) bool {
 	return errors.Is(e.Err, tar.Err) || tar.Err == nil
 }
 
+// MissingRequiredFieldError when user forgets to fill a required config
 type MissingRequiredFieldError struct {
 	Key   string
 	Field string
@@ -107,6 +116,7 @@ func (e *MissingRequiredFieldError) Error() string {
 	return fmt.Sprintf("required key '%s' for field '%s' not found", e.Key, e.Field)
 }
 
+// Is method to comply with new errors functions
 func (e *MissingRequiredFieldError) Is(target error) bool {
 	tar, ok := target.(*MissingRequiredFieldError)
 	if !ok {
@@ -116,6 +126,7 @@ func (e *MissingRequiredFieldError) Is(target error) bool {
 	return (e.Field == tar.Field || tar.Field == "") && (e.Key == tar.Key || tar.Key == "")
 }
 
+// InvalidTypeForDefaultValuesError when developer puts a bogus default value for some type
 type InvalidTypeForDefaultValuesError struct {
 	Type string
 }
@@ -124,6 +135,7 @@ func (e *InvalidTypeForDefaultValuesError) Error() string {
 	return fmt.Sprintf("field type '%s' not supported", e.Type)
 }
 
+// Is method to comply with new errors functions
 func (e *InvalidTypeForDefaultValuesError) Is(target error) bool {
 	tar, ok := target.(*InvalidTypeForDefaultValuesError)
 	if !ok {
@@ -133,12 +145,14 @@ func (e *InvalidTypeForDefaultValuesError) Is(target error) bool {
 	return e.Type == tar.Type || tar.Type == ""
 }
 
+// InvalidReceiver when developer pass something that isn't a point to struct to receive configs
 type InvalidReceiver struct{}
 
 func (e *InvalidReceiver) Error() string {
 	return "provided config receiver must be a pointer to struct"
 }
 
+// Is method to comply with new errors functions
 func (e *InvalidReceiver) Is(target error) bool {
 	_, ok := target.(*InvalidReceiver)
 	return ok

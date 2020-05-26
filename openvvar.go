@@ -38,11 +38,12 @@ func Load(receiverStruct interface{}, envFiles ...string) error {
 
 	}
 
-	if structConfig, err := parseStruct(reflected.Elem(), ""); err != nil {
+	structConfig, err := parseStruct(reflected.Elem(), "")
+	if err != nil {
 		return err
-	} else {
-		return fillData(structConfig)
 	}
+
+	return fillData(structConfig)
 
 }
 

@@ -318,7 +318,7 @@ func TestDotEnvFileWithNestedField(t *testing.T) {
 func TestFlagPriority(t *testing.T) {
 
 	type testStruct struct {
-		Name string `config:"another_name;required"`
+		Name string `config:"another_name;default=wrong1"`
 	}
 	s := testStruct{}
 
@@ -326,7 +326,24 @@ func TestFlagPriority(t *testing.T) {
 	os.Args = os.Args[:1]
 
 	os.Args = append(os.Args[:1], fmt.Sprintf("-another_name=%s", "right"))
-	os.Setenv("ANOTHER_NAME", "wrong")
+	os.Setenv("ANOTHER_NAME", "wrong2")
+
+	assert.Nil(t, Load(&s))
+
+	assert.Equal(t, testStruct{Name: "right"}, s)
+}
+
+func TestEnvPriority(t *testing.T) {
+
+	type testStruct struct {
+		Name string `config:"another_name;default=wrong"`
+	}
+	s := testStruct{}
+
+	// Cleaning args so a test args can't interfere on another test
+	os.Args = os.Args[:1]
+
+	os.Setenv("ANOTHER_NAME", "right")
 
 	assert.Nil(t, Load(&s))
 
