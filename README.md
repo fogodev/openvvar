@@ -1,3 +1,5 @@
-openvvar - Opinionated Environment Variables
+![](https://github.com/fogodev/openvvar/workflows/.github/workflows/unit_tests.yaml/badge.svg)
 
-WIP - Based on https://github.com/heetch/confita
+# openvvar - Opinionated Environment Variables
+
+WIP
