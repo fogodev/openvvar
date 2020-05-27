@@ -1,3 +1,42 @@
+/*
+Package openvvar provides an easy way to manage flags and environment variables at same time.
+Making use of struct tags to structure your configurations, providing neat features like nested structs
+for correlated configurations, required fields, default values for all the "primitive" types, like ints, uints,
+strings, booleans, floats, time.Duration and slices for any of those types.
+
+	type DatabaseConfig struct {
+		Name     string `config:"name;default=postgresql"`
+		Host     string `config:"host;default=localhost"`
+		Port     int    `config:"port;default=5432"`
+		User     string `config:"user;required"`
+		Password string `config:"password;required"`
+	}
+
+	type Config struct {
+		Database          DatabaseConfig
+		Debug             bool          `config:"debug;default=false;description=Set this config to true for debug log"`
+		AcceptedHeroNames []string      `config:"hero-names;default=Deadpool,Iron Man,Dr. Strange,Rocket Raccon"`
+		UniversalAnswer   uint8         `config:"universal-answer;default=42;short=u;description=THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING"`
+		SomeRandomFloat   float64       `config:"random-float;default=149714.1241"`
+		OneSecond         time.Duration `config:"second;default=1s"`
+	}
+
+Nested fields have their parent field name concatenated to its own name
+
+	$ DATABASE_USER=root # For environment variables
+
+	$ ./your_program -database-password=1234 # for flags
+
+To load configurations, just instantiate an object from your struct and pass its pointer to Load function,
+checking for errors afterward:
+
+	configs := Config{}
+	if err := openvvar.Load(&configs); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+*/
 package openvvar
 
 import (
@@ -10,10 +49,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// StructConfig holds informations about each field of a struct S.
-type StructConfig struct {
+// structConfig holds information about each field of a struct S.
+type structConfig struct {
 	Struct interface{}
-	Fields []*FieldConfig
+	Fields []*fieldConfig
 }
 
 const shortString string = "short="
@@ -34,7 +73,7 @@ func Load(receiverStruct interface{}, envFiles ...string) error {
 	reflected := reflect.ValueOf(receiverStruct)
 
 	if !reflected.IsValid() || reflected.Kind() != reflect.Ptr || reflected.Elem().Kind() != reflect.Struct {
-		return &InvalidReceiver{}
+		return &InvalidReceiverError{}
 
 	}
 
@@ -47,8 +86,8 @@ func Load(receiverStruct interface{}, envFiles ...string) error {
 
 }
 
-func parseStruct(receiverStruct reflect.Value, prefix string) (*StructConfig, error) {
-	var structConfig StructConfig
+func parseStruct(receiverStruct reflect.Value, prefix string) (*structConfig, error) {
+	var structConfig structConfig
 
 	receiverStructType := receiverStruct.Type()
 
@@ -89,7 +128,7 @@ func parseStruct(receiverStruct reflect.Value, prefix string) (*StructConfig, er
 					tag = fmt.Sprintf("%s-%s", strings.ToLower(prefix), tag)
 				}
 
-				fieldConfig := FieldConfig{
+				fieldConfig := fieldConfig{
 					Name:  fmt.Sprintf("%s%s", prefix, field.Name),
 					Key:   tag,
 					Value: value,
@@ -127,7 +166,7 @@ func parseStruct(receiverStruct reflect.Value, prefix string) (*StructConfig, er
 	return &structConfig, nil
 }
 
-func fillData(structConfig *StructConfig) error {
+func fillData(structConfig *structConfig) error {
 
 	if err := loadStructData(structConfig); err != nil {
 		return err

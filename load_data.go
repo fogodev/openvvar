@@ -8,7 +8,7 @@ import (
 )
 
 // loadStructData takes a struct config, define flags based on it and parse the command line args.
-func loadStructData(config *StructConfig) error {
+func loadStructData(config *structConfig) error {
 
 	commandLine := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 

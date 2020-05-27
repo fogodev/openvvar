@@ -145,15 +145,15 @@ func (e *InvalidTypeForDefaultValuesError) Is(target error) bool {
 	return e.Type == tar.Type || tar.Type == ""
 }
 
-// InvalidReceiver when developer pass something that isn't a point to struct to receive configs
-type InvalidReceiver struct{}
+// InvalidReceiverError when developer pass something that isn't a point to struct to receive configs
+type InvalidReceiverError struct{}
 
-func (e *InvalidReceiver) Error() string {
+func (e *InvalidReceiverError) Error() string {
 	return "provided config receiver must be a pointer to struct"
 }
 
 // Is method to comply with new errors functions
-func (e *InvalidReceiver) Is(target error) bool {
-	_, ok := target.(*InvalidReceiver)
+func (e *InvalidReceiverError) Is(target error) bool {
+	_, ok := target.(*InvalidReceiverError)
 	return ok
 }

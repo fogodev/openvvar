@@ -1,14 +1,15 @@
 package openvvar
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// FieldConfig holds informations about a struct field.
-type FieldConfig struct {
+// fieldConfig holds informations about a struct field.
+type fieldConfig struct {
 	Name        string
 	Short       string
 	Key         string
@@ -20,13 +21,16 @@ type FieldConfig struct {
 
 var durationType = reflect.TypeOf(time.Duration(0))
 
-// Set and String so FieldConfig complain with flag.Value
-func (f *FieldConfig) Set(data string) error {
+// Set and String so fieldConfig complain with flag.Value
+func (f *fieldConfig) Set(data string) error {
 	return convert(data, f.Value)
 }
 
-func (f *FieldConfig) String() string {
-	return f.Key
+func (f *fieldConfig) String() string {
+	if f.Required && f.Default.IsZero() {
+		return ""
+	}
+	return fmt.Sprintf("%v", f.Default)
 }
 
 func convert(data string, value reflect.Value) error {

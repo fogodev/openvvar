@@ -405,7 +405,7 @@ func TestInvalidReceiver(t *testing.T) {
 
 	assert.True(
 		t,
-		errors.Is(Load(42), &InvalidReceiver{}),
+		errors.Is(Load(42), &InvalidReceiverError{}),
 		"Openvvar must throw an error on invalid receiver",
 	)
 }
@@ -442,6 +442,60 @@ func TestErrors(t *testing.T) {
 	assert.Equal(t, (&InvalidTypeForDefaultValuesError{"a"}).Error(), "field type 'a' not supported")
 	assert.False(t, errors.Is(&InvalidTypeForDefaultValuesError{}, conversionError))
 
-	assert.Equal(t, (&InvalidReceiver{}).Error(), "provided config receiver must be a pointer to struct")
-	assert.False(t, errors.Is(&InvalidReceiver{}, conversionError))
+	assert.Equal(t, (&InvalidReceiverError{}).Error(), "provided config receiver must be a pointer to struct")
+	assert.False(t, errors.Is(&InvalidReceiverError{}, conversionError))
+}
+
+func TestDocummentationExample(t *testing.T) {
+	type DatabaseConfig struct {
+		Name     string `config:"name;default=postgresql"`
+		Host     string `config:"host;default=localhost"`
+		Port     int    `config:"port;default=5432"`
+		User     string `config:"user;required"`
+		Password string `config:"password;required"`
+	}
+
+	type Config struct {
+		Database          DatabaseConfig
+		Debug             bool          `config:"debug;default=false;description=Set this config to true for debug log"`
+		AcceptedHeroNames []string      `config:"hero-names;default=Deadpool,Iron Man,Dr. Strange,Rocket Raccon"`
+		UniversalAnswer   uint8         `config:"universal-answer;default=42;short=u;description=THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING"`
+		SomeRandomFloat   float64       `config:"random-float;default=149714.1241"`
+		OneSecond         time.Duration `config:"second;default=1s"`
+	}
+
+	os.Setenv("DEBUG", "true")
+	os.Setenv("DATABASE_USER", "root")
+	os.Setenv("RANDOM_FLOAT", "999999.9")
+
+	os.Args = append(
+		os.Args[:1],
+		"-u=42",
+		"-second=1s",
+		"-database-password=1234",
+	)
+
+	configs := Config{}
+	if err := Load(&configs); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	expected := Config{
+		Database: DatabaseConfig{
+			Name:     "postgresql",
+			Host:     "localhost",
+			Port:     5432,
+			User:     "root",
+			Password: "1234",
+		},
+		Debug:             true,
+		AcceptedHeroNames: []string{"Deadpool", "Iron Man", "Dr. Strange", "Rocket Raccon"},
+		UniversalAnswer:   42,
+		SomeRandomFloat:   999999.9,
+		OneSecond:         1 * time.Second,
+	}
+
+	assert.Equal(t, expected, configs)
+
 }
