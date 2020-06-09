@@ -20,7 +20,7 @@ import (
 )
 
 type DatabaseConfig struct {
-    Name     string `config:"name;default=postgresql"`
+    Name     string `config:"name;default=postgresql,options=postgresql,mysql"`
     Host     string `config:"host;default=localhost"`
     Port     int    `config:"port;default=5432"`
     User     string `config:"user;required"`
