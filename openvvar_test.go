@@ -410,6 +410,41 @@ func TestInvalidReceiver(t *testing.T) {
 	)
 }
 
+func TestOptionsOk(t *testing.T) {
+	s := struct {
+		Options string `config:"options;options=option1,option2,option3"`
+	}{}
+
+	os.Args = os.Args[:1]
+
+	os.Args = append(
+		os.Args,
+		"-options=option2",
+	)
+
+	assert.Nil(t, Load(&s))
+	assert.Equal(t, "option2", s.Options)
+}
+
+func TestOptionsError(t *testing.T) {
+	s := struct {
+		Options string `config:"options;options=option1,option2,option3"`
+	}{}
+
+	os.Args = os.Args[:1]
+
+	os.Args = append(
+		os.Args,
+		"-options=not_option",
+	)
+
+	assert.True(
+		t,
+		errors.Is(Load(&s), &ValueNotAValidOptionError{}),
+		"Openvvar must throw an error for invalid default values",
+	)
+}
+
 func TestErrors(t *testing.T) {
 	notFound := errors.New("not found")
 	assert.Equal(t, (&DotEnvNotFoundError{notFound}).Error(), "not found")
@@ -444,6 +479,16 @@ func TestErrors(t *testing.T) {
 
 	assert.Equal(t, (&InvalidReceiverError{}).Error(), "provided config receiver must be a pointer to struct")
 	assert.False(t, errors.Is(&InvalidReceiverError{}, conversionError))
+
+	optionsSet := map[string]bool{
+		"test":  true,
+		"test2": true,
+	}
+	assert.Equal(t, (&ValueNotAValidOptionError{"not_test", optionsSet}).Error(), "received value \"not_test\" is not a valid option from [test test2]")
+	assert.False(t, errors.Is(&ValueNotAValidOptionError{}, conversionError))
+	assert.False(t, errors.Is(&ValueNotAValidOptionError{"not_test", optionsSet}, &ValueNotAValidOptionError{"wrong", map[string]bool{}}))
+	assert.True(t, errors.Is(&ValueNotAValidOptionError{"not_test", optionsSet}, &ValueNotAValidOptionError{}))
+	assert.True(t, errors.Is(&ValueNotAValidOptionError{"not_test", optionsSet}, &ValueNotAValidOptionError{"not_test", optionsSet}))
 }
 
 func TestDocummentationExample(t *testing.T) {

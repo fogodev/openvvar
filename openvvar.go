@@ -58,6 +58,7 @@ type structConfig struct {
 const shortString string = "short="
 const descriptionString string = "description="
 const defaultString string = "default="
+const optionsString string = "options="
 
 // Load analyses all the Fields of the given struct for a "config" tag and queries flags and env vars
 func Load(receiverStruct interface{}, envFiles ...string) error {
@@ -154,6 +155,11 @@ func parseStruct(receiverStruct reflect.Value, prefix string) (*structConfig, er
 							if err := convert(opt[len(defaultString):], fieldConfig.Default); err != nil {
 								return nil, err
 							}
+						} else if strings.HasPrefix(opt, optionsString) {
+							fieldConfig.Options = make(map[string]bool)
+							for _, option := range strings.Split(opt[len(optionsString):], ",") {
+								fieldConfig.Options[strings.TrimSpace(option)] = true
+							}
 						}
 					}
 				}
@@ -175,6 +181,15 @@ func fillData(structConfig *structConfig) error {
 	for _, field := range structConfig.Fields {
 		if field.Required && field.Value.IsZero() {
 			return &MissingRequiredFieldError{field.Key, field.Name}
+		}
+
+		if field.Options != nil {
+			if _, ok := field.Options[field.Value.String()]; !ok {
+				return &ValueNotAValidOptionError{
+					Value:   field.Value.String(),
+					Options: field.Options,
+				}
+			}
 		}
 	}
 

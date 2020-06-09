@@ -16,6 +16,7 @@ type fieldConfig struct {
 	Description string
 	Value       reflect.Value
 	Default     reflect.Value
+	Options     map[string]bool
 	Required    bool
 }
 

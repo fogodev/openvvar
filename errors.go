@@ -157,3 +157,37 @@ func (e *InvalidReceiverError) Is(target error) bool {
 	_, ok := target.(*InvalidReceiverError)
 	return ok
 }
+
+// ValueNotAValidOptionError for when received valued is not listed as a valid option
+type ValueNotAValidOptionError struct {
+	Value   string
+	Options map[string]bool
+}
+
+func (e *ValueNotAValidOptionError) Error() string {
+	options := make([]string, 0, len(e.Options))
+	for option := range e.Options {
+		options = append(options, option)
+	}
+	return fmt.Sprintf("received value \"%s\" is not a valid option from %v", e.Value, options)
+}
+
+// Is method to comply with new errors functions
+func (e *ValueNotAValidOptionError) Is(target error) bool {
+	tar, ok := target.(*ValueNotAValidOptionError)
+	if !ok {
+		return false
+	}
+	if tar.Options == nil && tar.Value == "" {
+		return true
+	}
+
+	for option, v := range e.Options {
+		if tar.Options[option] != v {
+			// If one of my options doesn't exist on target, we're different errors
+			return false
+		}
+	}
+
+	return true
+}
