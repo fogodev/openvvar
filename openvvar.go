@@ -126,7 +126,13 @@ func parseStruct(receiverStruct reflect.Value, prefix string) (*structConfig, er
 			// Skipping fields with empty tags or no tags at all
 			if tag != "" {
 				if prefix != "" {
-					tag = fmt.Sprintf("%s-%s", strings.ToLower(prefix), tag)
+					tag = strings.Join(
+						[]string{
+							changePascalCapsToKebabCase(prefix),
+							strings.TrimSpace(tag),
+						},
+						"-",
+					)
 				}
 
 				fieldConfig := fieldConfig{
@@ -142,7 +148,7 @@ func parseStruct(receiverStruct reflect.Value, prefix string) (*structConfig, er
 
 				// Getting options for current field
 				if idx := strings.Index(tag, ";"); idx != -1 {
-					fieldConfig.Key = tag[:idx]
+					fieldConfig.Key = strings.ReplaceAll(changePascalCapsToKebabCase(tag[:idx]), "_", "-")
 
 					for _, opt := range strings.Split(tag[idx+1:], ";") {
 						if opt == "required" {
@@ -162,6 +168,8 @@ func parseStruct(receiverStruct reflect.Value, prefix string) (*structConfig, er
 							}
 						}
 					}
+				} else {
+					fieldConfig.Key = strings.ReplaceAll(changePascalCapsToKebabCase(tag), "_", "-")
 				}
 
 				structConfig.Fields = append(structConfig.Fields, &fieldConfig)
@@ -194,4 +202,37 @@ func fillData(structConfig *structConfig) error {
 	}
 
 	return nil
+}
+
+func changePascalCapsToKebabCase(word string) string {
+	stringBuilder := strings.Builder{}
+	wordLen := len(word)
+	stringBuilder.Grow(wordLen + 2)
+
+	for index, letter := range []byte(word) {
+		isUpperCase := letter >= 'A' && letter <= 'Z'
+		if isUpperCase {
+			letter += 'a'
+			letter -= 'A'
+		}
+
+		if index > 0 {
+			previousLetter := word[index-1]
+
+			if index+1 < wordLen {
+				nextLetter := word[index+1]
+				if isUpperCase && (nextLetter >= 'a' && nextLetter <= 'z' || previousLetter >= 'a' && previousLetter <= 'z') {
+					stringBuilder.WriteByte('-')
+				}
+			} else {
+				// Dealing with a upper case alone in the last position
+				if isUpperCase && previousLetter >= 'a' && previousLetter <= 'z' {
+					stringBuilder.WriteByte('-')
+				}
+			}
+		}
+		stringBuilder.WriteByte(letter)
+	}
+
+	return stringBuilder.String()
 }

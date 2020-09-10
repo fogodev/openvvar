@@ -50,5 +50,5 @@ func shortDesc(description string) string {
 }
 
 func getEnvVar(flagName string) (string, bool) {
-	return os.LookupEnv(strings.Replace(strings.ToUpper(flagName), "-", "_", -1))
+	return os.LookupEnv(strings.ReplaceAll(strings.ToUpper(flagName), "-", "_"))
 }

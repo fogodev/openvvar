@@ -81,8 +81,8 @@ func TestLoad(t *testing.T) {
 	os.Setenv("UINT16", uint16Env)
 	os.Setenv("UINT32", uint32Env)
 	os.Setenv("UINT64", uint64Env)
-	os.Setenv("STRUCTPTRNOTNIL_INT", intEnv)
-	os.Setenv("STRUCTPTRNOTNIL_STRING", stringFlag)
+	os.Setenv("STRUCT_PTR_NOT_NIL_INT", intEnv)
+	os.Setenv("STRUCT_PTR_NOT_NIL_STRING", stringFlag)
 
 	// Cleaning args so a test args can't interfere on another test
 	os.Args = os.Args[:1]
@@ -96,8 +96,8 @@ func TestLoad(t *testing.T) {
 		fmt.Sprintf("-duration=%s", durationFlag),
 		fmt.Sprintf("-struct-int=%s", intEnv),
 		fmt.Sprintf("-struct-string=%s", stringFlag),
-		fmt.Sprintf("-structptrnotnil-int=%s", intEnv),
-		fmt.Sprintf("-structptrnotnil-string=%s", stringFlag),
+		fmt.Sprintf("-struct-ptr-not-nil-int=%s", intEnv),
+		fmt.Sprintf("-struct-ptr-not-nil-string=%s", stringFlag),
 	)
 
 	assert.Nil(t, Load(&s))
@@ -325,7 +325,7 @@ func TestFlagPriority(t *testing.T) {
 	// Cleaning args so a test args can't interfere on another test
 	os.Args = os.Args[:1]
 
-	os.Args = append(os.Args[:1], fmt.Sprintf("-another_name=%s", "right"))
+	os.Args = append(os.Args[:1], fmt.Sprintf("-another-name=%s", "right"))
 	os.Setenv("ANOTHER_NAME", "wrong2")
 
 	assert.Nil(t, Load(&s))
@@ -491,7 +491,7 @@ func TestErrors(t *testing.T) {
 	assert.True(t, errors.Is(&ValueNotAValidOptionError{"not_test", optionsSet}, &ValueNotAValidOptionError{"not_test", optionsSet}))
 }
 
-func TestDocummentationExample(t *testing.T) {
+func TestDocumentationExample(t *testing.T) {
 	type DatabaseConfig struct {
 		Name     string `config:"name;default=postgresql"`
 		Host     string `config:"host;default=localhost"`
@@ -501,7 +501,7 @@ func TestDocummentationExample(t *testing.T) {
 	}
 
 	type Config struct {
-		Database          DatabaseConfig
+		SQLDatabase       DatabaseConfig
 		Debug             bool          `config:"debug;default=false;description=Set this config to true for debug log"`
 		AcceptedHeroNames []string      `config:"hero-names;default=Deadpool,Iron Man,Dr. Strange,Rocket Raccon"`
 		UniversalAnswer   uint8         `config:"universal-answer;default=42;short=u;description=THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING"`
@@ -510,14 +510,14 @@ func TestDocummentationExample(t *testing.T) {
 	}
 
 	os.Setenv("DEBUG", "true")
-	os.Setenv("DATABASE_USER", "root")
+	os.Setenv("SQL_DATABASE_USER", "root")
 	os.Setenv("RANDOM_FLOAT", "999999.9")
 
 	os.Args = append(
 		os.Args[:1],
 		"-u=42",
 		"-second=1s",
-		"-database-password=1234",
+		"-sql-database-password=1234",
 	)
 
 	configs := Config{}
@@ -527,7 +527,7 @@ func TestDocummentationExample(t *testing.T) {
 	}
 
 	expected := Config{
-		Database: DatabaseConfig{
+		SQLDatabase: DatabaseConfig{
 			Name:     "postgresql",
 			Host:     "localhost",
 			Port:     5432,
@@ -543,4 +543,30 @@ func TestDocummentationExample(t *testing.T) {
 
 	assert.Equal(t, expected, configs)
 
+}
+
+func TestPascalCapsConversions(t *testing.T) {
+	assert.Equal(
+		t,
+		"testing-pascal-to-kebab-case",
+		changePascalCapsToKebabCase("TestingPascalToKebabCase"),
+	)
+
+	assert.Equal(
+		t,
+		"testing-pascal-to-kebab-case-with-abbreviation-is-ok",
+		changePascalCapsToKebabCase("TestingPascalToKebabCaseWithABBREVIATIONIsOk"),
+	)
+
+	assert.Equal(
+		t,
+		"testing-pascal-to-kebab-case-ending-with-upper-case-f",
+		changePascalCapsToKebabCase("TestingPascalToKebabCaseEndingWithUpperCaseF"),
+	)
+
+	assert.Equal(
+		t,
+		"testing-pascal-to-kebab-case-ending-with-abbreviation",
+		changePascalCapsToKebabCase("TestingPascalToKebabCaseEndingWithABBREVIATION"),
+	)
 }
